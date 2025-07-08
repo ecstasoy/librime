@@ -124,6 +124,20 @@ typedef struct {
   char* preedit;
 } RimeComposition;
 
+typedef uint16_t RimeChar16
+
+typedef struct {
+  int length_char16;
+  int cursor_pos_char16;
+  int sel_start_char16;
+  int sel_end_char16;
+  RimeChar16* preedit_char16;
+  RimeChar16* display_text_char16;
+  int display_cursor_pos_char16;
+  int display_sel_start_char16;
+  int display_sel_end_char16;
+} RimeCompositionUtf16;
+
 typedef struct rime_candidate_t {
   char* text;
   char* comment;
@@ -148,6 +162,16 @@ typedef struct rime_commit_t {
   // v0.9
   char* text;
 } RimeCommit;
+
+typedef struct RIME_FLAVORED(rime_context_utf16_t) {
+  int data_size;
+  // v0.9
+  RimeCompositionUtf16 composition;
+  RIME_FLAVORED(RimeMenu) menu;
+  // v0.9.2
+  RimeChar16* commit_text_preview_utf16;
+  char** select_labels;
+} RIME_FLAVORED(RimeContextUtf16);
 
 /*!
  *  Should be initialized by calling RIME_STRUCT_INIT(Type, var);
@@ -327,6 +351,12 @@ typedef struct RIME_FLAVORED(rime_api_t) {
   Bool (*get_status)(RimeSessionId session_id,
                      RIME_FLAVORED(RimeStatus) * status);
   Bool (*free_status)(RIME_FLAVORED(RimeStatus) * status);
+
+  // UTF-16 output functions
+
+  Bool (*get_context_utf16)(RimeSessionId session_id,
+                            RIME_FLAVORED(RimeContextUtf16) * context);
+  Bool (*free_context_utf16)(RIME_FLAVORED(RimeContextUtf16) * context);
 
   // runtime options
 

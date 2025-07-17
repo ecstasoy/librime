@@ -166,7 +166,7 @@ typedef struct RIME_FLAVORED(rime_context_t) {
  *  Candidate preview structure for inline candidate display
  *  Should be initialized by calling RIME_STRUCT_INIT(Type, var);
  */
-typedef struct rime_candidate_preview_t {
+typedef struct RIME_FLAVORED(rime_candidate_preview_t) {
     int data_size;
     char* preview_text;
     int consumed_length;
@@ -175,7 +175,7 @@ typedef struct rime_candidate_preview_t {
     int candidate_start_index;
     int candidate_end_index;
     Bool has_remaining_input;
-} RimeCandidatePreview;
+} RIME_FLAVORED(RimeCandidatePreview);
 
 /*!
  *  Should be initialized by calling RIME_STRUCT_INIT(Type, var);
@@ -523,13 +523,13 @@ typedef struct RIME_FLAVORED(rime_api_t) {
 
   //! get candidate preview for inline candidate display
   Bool (*get_candidate_preview)(RimeSessionId session_id, size_t index,
-                              RimeCandidatePreview* preview);
+                              RIME_FLAVORED(RimeCandidatePreview)* preview);
   //! get candidate preview from current page
   Bool (*get_candidate_preview_on_current_page)(RimeSessionId session_id,
                                               size_t index,
-                                              RimeCandidatePreview* preview);
+                                              RIME_FLAVORED(RimeCandidatePreview)* preview);
   //! free candidate preview structure
-Bool (*free_candidate_preview)(RimeCandidatePreview* preview);
+Bool (*free_candidate_preview)(RIME_FLAVORED(RimeCandidatePreview)* preview);
 } RIME_FLAVORED(RimeApi);
 
 //! API entry

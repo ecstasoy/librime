@@ -36,6 +36,18 @@ class RIME_DLL Context {
   bool HasMenu() const;
   an<Candidate> GetSelectedCandidate() const;
 
+  struct CandidatePreview {
+      string preview_text;
+      size_t consumed_length;
+      size_t candidate_start;
+      size_t candidate_end;
+      size_t candidate_start_index;
+      size_t candidate_end_index;
+      bool has_remaining_input;
+  };
+
+  CandidatePreview GetCandidatePreview(size_t candidate_index) const;
+
   bool PushInput(char ch);
   bool PushInput(const string& str);
   bool PopInput(size_t len = 1);

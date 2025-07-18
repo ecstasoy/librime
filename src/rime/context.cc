@@ -319,4 +319,18 @@ void Context::ClearTransientOptions() {
   }
 }
 
+  Context::CandidatePreview Context::GetCandidatePreview(size_t candidate_index) const {
+    CandidatePreview result;
+    auto preview = composition_.GetCandidatePreview(candidate_index);
+
+    result.preview_text = preview.preview_text;
+    result.consumed_length = preview.consumed_length;
+    result.candidate_start = preview.candidate_start;
+    result.candidate_end = preview.candidate_end;
+    result.candidate_start_index = preview.candidate_start_index;
+    result.candidate_end_index = preview.candidate_end_index;
+    result.has_remaining_input = preview.has_remaining_input;
+
+    return result;
+  }
 }  // namespace rime

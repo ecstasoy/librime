@@ -9,6 +9,7 @@
 #include <rime/candidate.h>
 #include <rime/composition.h>
 #include <rime/menu.h>
+#include <utf8.h>
 
 namespace rime {
 
@@ -177,6 +178,88 @@ string Composition::GetTextBefore(size_t pos) const {
     }
   }
   return string();
+}
+
+Composition::CandidatePreview Composition::GetCandidatePreview(size_t candidate_index) const {
+  DLOG(INFO) << "GetCandidatePreview called with index: " << candidate_index;
+  if (empty()) {
+    return CandidatePreview{};
+  }
+  DLOG(INFO) << "Composition has " << size() << " segments";
+  return GetCandidatePreviewForCurrentSegment(candidate_index);
+}
+
+Composition::CandidatePreview Composition::GetCandidatePreviewForCurrentSegment(size_t candidate_index) const {
+  DLOG(INFO) << "GetCandidatePreviewForCurrentSegment called with index: " << candidate_index;
+  CandidatePreview preview;
+  preview.consumed_length = 0;
+  preview.candidate_start = 0;
+  preview.candidate_end = 0;
+  preview.has_remaining_input = false;
+
+  if (empty()) {
+    return preview;
+  }
+
+  const Segment& current_seg = at(size() - 1);
+  DLOG(INFO) << "Current segment: [" << current_seg.start << ", " << current_seg.end << "]";
+  
+  if (!current_seg.menu) {
+    return preview;
+  }
+
+  auto candidate = current_seg.GetCandidateAt(candidate_index);
+  if (!candidate) {
+    return preview;
+  }
+  
+  DLOG(INFO) << "Found candidate: '" << candidate->text() << "' at [" << candidate->start() << ", " << candidate->end() << "]";
+
+  string result;
+  size_t end = 0;
+  for (size_t i = 0; i < size() - 1; i++) {
+    const Segment& seg = at(i);
+    if (seg.status >= Segment::kSelected) {
+      if (auto cand = seg.GetSelectedCandidate()) {
+        end = cand->end();
+        result += cand->text();
+      } else {
+        end = seg.end;
+        string raw_text = input_.substr(seg.start, seg.end - seg.start);
+        result += raw_text;
+      }
+    }
+  }
+
+  // append the selected candidate text
+  preview.candidate_start = result.length();
+
+  result += candidate->text();
+  preview.candidate_end = result.length();
+  preview.consumed_length = candidate->end() - current_seg.start;
+
+  size_t candidate_end_pos = candidate->end();
+  if (input_.length() > candidate_end_pos) {
+    string remaining = input_.substr(candidate_end_pos);
+    result += remaining;
+    preview.has_remaining_input = true;
+  }
+
+  preview.preview_text = result;
+
+  preview.candidate_start_index = static_cast<int>(
+    utf8::unchecked::distance(result.c_str(), result.c_str() + preview.candidate_start)
+  );
+
+  preview.candidate_end_index = static_cast<int>(
+    utf8::unchecked::distance(result.c_str(), result.c_str() + preview.candidate_end)
+  );
+  
+  DLOG(INFO) << "Final preview: '" << preview.preview_text << "'";
+  DLOG(INFO) << "Candidate byte range: [" << preview.candidate_start << ", " << preview.candidate_end << "]";
+  DLOG(INFO) << "Candidate char range: [" << preview.candidate_start_index << ", " << preview.candidate_end_index << "]";
+  
+  return preview;
 }
 
 }  // namespace rime

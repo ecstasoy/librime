@@ -1023,6 +1023,89 @@ static Bool RimeChangePage(RimeSessionId session_id, Bool backward) {
   return Bool(ctx->Highlight(index));
 }
 
+Bool RimeGetCandidatePreview(RimeSessionId session_id,
+                                             size_t index,
+                                             RIME_FLAVORED(RimeCandidatePreview)* preview) {
+  DLOG(INFO) << "RimeGetCandidatePreview called with session_id: " << session_id << ", index: " << index;
+  
+  if (!preview || preview->data_size <= 0) {
+    return False;
+  }
+  RIME_STRUCT_CLEAR(*preview);
+
+  an<Session> session(Service::instance().GetSession(session_id));
+  if (!session) {
+    return False;
+  }
+  Context* ctx = session->context();
+  if (!ctx || !ctx->HasMenu()) {
+    return False;
+  }
+
+  auto candidate_preview = ctx->GetCandidatePreview(index);
+  if (candidate_preview.preview_text.empty()) {
+    return False;
+  }
+
+  DLOG(INFO) << "Preview text: '" << candidate_preview.preview_text << "'";
+  DLOG(INFO) << "Consumed length: " << candidate_preview.consumed_length;
+  DLOG(INFO) << "Candidate range: [" << candidate_preview.candidate_start << ", " << candidate_preview.candidate_end << "]";
+
+  preview->preview_text = new char[candidate_preview.preview_text.length() + 1];
+  std::strcpy(preview->preview_text, candidate_preview.preview_text.c_str());
+  preview->consumed_length = static_cast<int>(candidate_preview.consumed_length);
+  preview->candidate_start = static_cast<int>(candidate_preview.candidate_start);
+  preview->candidate_end = static_cast<int>(candidate_preview.candidate_end);
+  preview->candidate_start_index = static_cast<int>(candidate_preview.candidate_start_index);
+  preview->candidate_end_index = static_cast<int>(candidate_preview.candidate_end_index);
+  preview->has_remaining_input = candidate_preview.has_remaining_input ? True : False;
+
+  return True;
+}
+
+Bool RimeGetCandidatePreviewOnCurrentPage(RimeSessionId session_id,
+                                                          size_t index,
+                                                          RIME_FLAVORED(RimeCandidatePreview)* preview) {
+  if (!preview || preview->data_size <= 0) return False;
+  RIME_STRUCT_CLEAR(*preview);
+
+  an<Session> session(Service::instance().GetSession(session_id));
+  if (!session) return False;
+  Context* ctx = session->context();
+  if (!ctx || !ctx->HasMenu()) return False;
+
+  Schema* schema = session->schema();
+  if (!schema) return False;
+  size_t page_size = (size_t)schema->page_size();
+  if (index >= page_size) return False;
+
+  const auto& seg(ctx->composition().back());
+  size_t page_start = seg.selected_index / page_size * page_size;
+  size_t absolute_index = page_start + index;
+
+  auto candidate_preview = ctx->GetCandidatePreview(absolute_index);
+  if (candidate_preview.preview_text.empty()) return False;
+
+  preview->preview_text = new char[candidate_preview.preview_text.length() + 1];
+  std::strcpy(preview->preview_text, candidate_preview.preview_text.c_str());
+  preview->consumed_length = static_cast<int>(candidate_preview.consumed_length);
+  preview->candidate_start = static_cast<int>(candidate_preview.candidate_start);
+  preview->candidate_end = static_cast<int>(candidate_preview.candidate_end);
+  preview->candidate_start_index = static_cast<int>(candidate_preview.candidate_start_index);
+  preview->candidate_end_index = static_cast<int>(candidate_preview.candidate_end_index);
+  preview->has_remaining_input = candidate_preview.has_remaining_input ? True : False;
+
+  return True;
+}
+
+Bool RimeFreeCandidatePreview(RIME_FLAVORED(RimeCandidatePreview)* preview) {
+  if (!preview)
+    return False;
+  delete[] preview->preview_text;
+  RIME_STRUCT_CLEAR(*preview);
+  return True;
+}
+
 static Bool RimeHighlightCandidate(RimeSessionId session_id, size_t index) {
   return (Bool)do_with_candidate(session_id, index, &Context::Highlight);
 }

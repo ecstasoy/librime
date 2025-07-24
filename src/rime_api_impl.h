@@ -1311,6 +1311,9 @@ RIME_API RIME_FLAVORED(RimeApi) * RIME_FLAVORED(rime_get_api)() {
     s_api.highlight_candidate_on_current_page =
         &RimeHighlightCandidateOnCurrentPage;
     s_api.change_page = &RimeChangePage;
+    s_api.get_candidate_preview = &RimeGetCandidatePreview;
+    s_api.get_candidate_preview_on_current_page = &RimeGetCandidatePreviewOnCurrentPage;
+    s_api.free_candidate_preview = &RimeFreeCandidatePreview;
   }
   return &s_api;
 }
